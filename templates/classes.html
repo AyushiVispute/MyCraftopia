@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="py-16 bg-gray-50">
+  <div class="container mx-auto px-6">
+
+    <!-- Page Heading -->
+    <div class="text-center mb-12">
+      <h2 class="text-4xl md:text-5xl font-bold text-gray-800">
+        Our <span class="text-pink-500">Classes</span>
+      </h2>
+      <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+        Explore creative and fun workshops led by expert instructors.
+      </p>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" action="{{ url_for('classes') }}" class="flex flex-wrap justify-center gap-4 mb-10">
+      <input type="text" name="search" placeholder="Search classes..."
+             value="{{ request.args.get('search', '') }}"
+             class="px-4 py-2 border rounded-lg w-64 focus:outline-none focus:ring focus:ring-pink-200">
+      
+      <select name="category" class="px-4 py-2 border rounded-lg">
+        <option value="">All Categories</option>
+        <option value="Painting" {% if request.args.get('category') == 'Painting' %}selected{% endif %}>Painting</option>
+        <option value="Craft Kits" {% if request.args.get('category') == 'Craft Kits' %}selected{% endif %}>Craft Kits</option>
+        <option value="Knitting" {% if request.args.get('category') == 'Knitting' %}selected{% endif %}>Knitting</option>
+        <option value="Sewing" {% if request.args.get('category') == 'Sewing' %}selected{% endif %}>Sewing</option>
+        <option value="Baking" {% if request.args.get('category') == 'Baking' %}selected{% endif %}>Baking</option>
+      </select>
+
+      <select name="level" class="px-4 py-2 border rounded-lg">
+        <option value="">All Levels</option>
+        <option value="Beginner" {% if request.args.get('level') == 'Beginner' %}selected{% endif %}>Beginner</option>
+        <option value="Intermediate" {% if request.args.get('level') == 'Intermediate' %}selected{% endif %}>Intermediate</option>
+        <option value="Advanced" {% if request.args.get('level') == 'Advanced' %}selected{% endif %}>Advanced</option>
+      </select>
+
+      <button type="submit" class="px-6 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition">
+        Filter
+      </button>
+    </form>
+
+    <!-- Classes Grid -->
+    <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+      {% if classes %}
+        {% for c in classes %}
+        <div class="card-hover bg-white rounded-2xl shadow-md overflow-hidden">
+          <!-- Class Image -->
+          {% if c.image %}
+          <img src="{{ url_for('static', filename=c.image) }}" alt="{{ c.name }}" class="w-full h-56 object-cover">
+          {% else %}
+          <img src="{{ url_for('static', filename='images/default.jpg') }}" alt="Class Image" class="w-full h-56 object-cover">
+          {% endif %}
+
+          <!-- Class Content -->
+          <div class="p-6">
+            <h3 class="text-2xl font-semibold text-gray-800">{{ c.name }}</h3>
+            <p class="mt-2 text-gray-600">{{ c.desc[:120] }}{% if c.desc|length > 120 %}...{% endif %}</p>
+            <p class="mt-2 text-sm text-gray-500">{{ c.category }} • {{ c.level }}</p>
+            <a href="#" class="inline-block mt-4 px-5 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition">
+              Join Now
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="col-span-3 text-center text-gray-500">
+          😢 No classes found. Try adjusting your filters.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- Custom Hover Style -->
+<style>
+  .card-hover {
+    transition: all 0.3s ease;
+  }
+  .card-hover:hover {
+    transform: scale(1.05) translateY(-6px);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+  }
+</style>
+
+{% endblock %}

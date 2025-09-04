@@ -1,0 +1,239 @@
+{% extends "base.html" %} 
+{% block content %}
+
+<!-- Hero Slider  -->
+<section class="bg-white">
+  <div class="swiper mySwiper">
+    <div class="swiper-wrapper">
+
+      <!-- Slide 1 -->
+      <div class="swiper-slide relative h-[80vh] flex items-center justify-center bg-cover bg-center"
+           style="background-image: url('{{ url_for('static', filename='images/1.jpg') }}');">
+        <div class="absolute inset-0 bg-black/40"></div>
+        <div class="relative z-10 text-center text-white px-6 md:px-12">
+          <h1 class="text-4xl md:text-6xl font-bold leading-tight">
+            Find Creativity to <br />
+            <span class="text-pink-400">make happy</span>
+          </h1>
+          <p class="mt-4 text-lg md:text-2xl">Take a variety of interesting and fun classes.</p>
+          <a href="/login"
+             class="inline-block mt-6 px-8 py-4 bg-pink-500 text-white rounded-lg shadow-lg hover:bg-pink-600 transition">
+            JOIN US
+          </a>
+        </div>
+      </div>
+
+      <!-- Slide 2 -->
+      <div class="swiper-slide relative h-[80vh] flex items-center justify-center bg-cover bg-center"
+           style="background-image: url('{{ url_for('static', filename='images/2jpg.jpg') }}');">
+        <div class="absolute inset-0 bg-black/40"></div>
+        <div class="relative z-10 text-center text-white px-6 md:px-12">
+          <h1 class="text-4xl md:text-6xl font-bold leading-tight">
+            Explore <span class="text-pink-400">Art & Craft</span>
+          </h1>
+          <p class="mt-4 text-lg md:text-2xl">Join hands-on creative workshops anytime.</p>
+          <a href="/classes"
+             class="inline-block mt-6 px-8 py-4 bg-pink-500 text-white rounded-lg shadow-lg hover:bg-pink-600 transition">
+            VIEW CLASSES
+          </a>
+        </div>
+      </div>
+
+      <!-- Slide 3 -->
+      <div class="swiper-slide relative h-[80vh] flex items-center justify-center bg-cover bg-center"
+           style="background-image: url('{{ url_for('static', filename='images/3.webp') }}');">
+        <div class="absolute inset-0 bg-black/40"></div>
+        <div class="relative z-10 text-center text-white px-6 md:px-12">
+          <h1 class="text-4xl md:text-6xl font-bold leading-tight">
+            Learn with <span class="text-pink-400">Experts</span>
+          </h1>
+          <p class="mt-4 text-lg md:text-2xl">Discover tutorials and classes from top instructors.</p>
+          <a href="/shop"
+             class="inline-block mt-6 px-8 py-4 bg-pink-500 text-white rounded-lg shadow-lg hover:bg-pink-600 transition">
+            START LEARNING
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Swiper Controls -->
+    <div class="swiper-pagination"></div>
+    <div class="swiper-button-next"></div>
+    <div class="swiper-button-prev"></div>
+  </div>
+</section>
+
+<!-- Animated Counters -->
+<section class="py-16 bg-gray-100">
+  <div class="container mx-auto grid md:grid-cols-3 gap-8 text-center">
+    <div>
+      <h2 class="text-5xl font-bold text-pink-500 counter" data-target="500">500+</h2>
+      <p class="mt-2 text-gray-700 text-lg">Students</p>
+    </div>
+    <div>
+      <h2 class="text-5xl font-bold text-pink-500 counter" data-target="50">50+</h2>
+      <p class="mt-2 text-gray-700 text-lg">Classes</p>
+    </div>
+    <div>
+      <h2 class="text-5xl font-bold text-pink-500 counter" data-target="1000">100+</h2>
+      <p class="mt-2 text-gray-700 text-lg">Happy Customers</p>
+    </div>
+  </div>
+</section>
+
+<!--  Trending Products  -->
+<section class="relative py-20 bg-cover bg-center" 
+         style="background-image: url('{{ url_for('static', filename='images/blue.jpeg') }}');">
+  <!-- Background Overlay -->
+  <div class="absolute inset-0 bg-white/50"></div>
+
+  <div class="container mx-auto px-6 relative z-10">
+    <h2 class="text-4xl font-bold text-center text-gray-800 mb-12">✨ Trending Products</h2>
+
+    <div class="swiper productSwiper">
+      <div class="swiper-wrapper">
+        {% for p in products %}
+        <!-- Product Card -->
+        <div class="swiper-slide">
+          <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition max-w-4xl mx-auto">
+            <img src="{{ url_for('static', filename='images/' ~ p.image) }}"
+                 class="w-full h-[28rem] object-cover"
+                 alt="{{ p.name }}">
+            <div class="p-6 text-center">
+              <h3 class="text-2xl font-semibold text-gray-800">{{ p.name }}</h3>
+              <p class="text-gray-600 mt-3 text-lg">{{ p.desc[:120] }}...</p>
+              <div class="flex justify-between items-center mt-6">
+                <span class="text-pink-600 font-bold text-2xl">₹{{ p.price }}</span>
+                <a href="/shop"
+                   class="px-6 py-3 bg-pink-500 text-white text-base rounded-lg hover:bg-pink-600 transition">
+                  Shop Now
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Swiper Controls -->
+      <div class="swiper-button-next"></div>
+      <div class="swiper-button-prev"></div>
+      <div class="swiper-pagination"></div>
+    </div>
+  </div>
+</section>
+
+<!--  Testimonials -->
+<section class="relative py-20 bg-cover bg-center" 
+         style="background-image: url('{{ url_for('static', filename='images/bg1.pg.jpg') }}');">
+  <!-- Background Overlay -->
+  <div class="absolute inset-0 bg-white/70"></div>
+
+  <div class="container mx-auto px-6 relative z-10">
+    <h2 class="text-4xl font-bold text-center text-gray-800 mb-12">💬 What Our Students Say</h2>
+
+    <div class="swiper testimonialSwiper">
+      <div class="swiper-wrapper">
+        
+        <!-- Testimonial 1 -->
+        <div class="swiper-slide">
+          <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-8 max-w-2xl mx-auto text-center">
+            <p class="text-gray-700 text-lg italic">
+              "HappyCraft classes are amazing! I learned so many new techniques and had so much fun."
+            </p>
+            <div class="mt-6 flex flex-col items-center">
+              <img src="{{ url_for('static', filename='images/student1.jpg') }}"
+                   class="w-16 h-16 rounded-full object-cover border-2 border-pink-500" alt="Student 1">
+              <h3 class="mt-3 font-semibold text-gray-800">Prayank Sharma</h3>
+              <span class="text-sm text-pink-500">Student</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Testimonial 2 -->
+        <div class="swiper-slide">
+          <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-8 max-w-2xl mx-auto text-center">
+            <p class="text-gray-700 text-lg italic">
+              "The craft kits are top-notch and super easy to use. My kids loved them!"
+            </p>
+            <div class="mt-6 flex flex-col items-center">
+              <img src="{{ url_for('static', filename='images/parent.jpg') }}"
+                   class="w-16 h-16 rounded-full object-cover border-2 border-pink-500" alt="Parent">
+              <h3 class="mt-3 font-semibold text-gray-800">Rahul Sharma</h3>
+              <span class="text-sm text-pink-500">Parent</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Testimonial 3 -->
+        <div class="swiper-slide">
+          <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-8 max-w-2xl mx-auto text-center">
+            <p class="text-gray-700 text-lg italic">
+              "Best platform for learning crafts online. The instructors are very helpful."
+            </p>
+            <div class="mt-6 flex flex-col items-center">
+              <img src="{{ url_for('static', filename='images/student.jpg') }}"
+                   class="w-16 h-16 rounded-full object-cover border-2 border-pink-500" alt="Student 3">
+              <h3 class="mt-3 font-semibold text-gray-800">Priya Mehta</h3>
+              <span class="text-sm text-pink-500">Student</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Swiper Controls -->
+      <div class="swiper-button-next"></div>
+      <div class="swiper-button-prev"></div>
+      <div class="swiper-pagination"></div>
+    </div>
+  </div>
+</section>
+
+<!-- JS: Testimonial Carousel  -->
+<script>
+  // Testimonial Swiper
+  var testimonialSwiper = new Swiper(".testimonialSwiper", {
+    slidesPerView: 1,
+    spaceBetween: 30,
+    centeredSlides: true,
+    loop: true,
+    autoplay: {
+      delay: 4000,
+      disableOnInteraction: false,
+    },
+    navigation: {
+      nextEl: ".testimonialSwiper .swiper-button-next",
+      prevEl: ".testimonialSwiper .swiper-button-prev",
+    },
+    pagination: {
+      el: ".testimonialSwiper .swiper-pagination",
+      clickable: true,
+    }
+  });
+</script>
+
+<!--  JS: Product Carousel  -->
+<script>
+  // Product Swiper
+  var productSwiper = new Swiper(".productSwiper", {
+    slidesPerView: 1,          // show one card at a time
+    spaceBetween: 30,
+    centeredSlides: true,
+    loop: true,
+    autoplay: {
+      delay: 3000,             // slide every 3s
+      disableOnInteraction: false,
+    },
+    navigation: {
+      nextEl: ".swiper-button-next",
+      prevEl: ".swiper-button-prev",
+    },
+    pagination: {
+      el: ".swiper-pagination",
+      clickable: true,
+    }
+  });
+</script>
+{% endblock %}
