@@ -1,6 +1,6 @@
 
 
-from app import app, db, Product, Class
+from backend.app import app, db, Product, Class
 
 # -----------------------------
 # Sample Products
