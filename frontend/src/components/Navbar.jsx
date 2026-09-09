@@ -19,7 +19,7 @@ function Navbar() {
     const checkLogin = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/me",
+          "${import.meta.env.VITE_API_URL}/api/me",
           {
             withCredentials: true,
           }
@@ -48,7 +48,7 @@ function Navbar() {
   const handleLogout = async () => {
     try {
       await axios.post(
-        "http://localhost:5000/api/logout",
+        "${import.meta.env.VITE_API_URL}/api/logout",
         {},
         {
           withCredentials: true,
