@@ -16,42 +16,52 @@ function Signup() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ==============================
+  // HANDLE INPUT CHANGE
+  // ==============================
   const handleChange = (event) => {
-    const { name, value } = event.target;
-
-    setFormData((previousData) => ({
-      ...previousData,
-      [name]: value,
-    }));
-
-    // Clear password error while typing
-    if (name === "password" || name === "confirmPassword") {
-      setError("");
-    }
+    setFormData({
+      ...formData,
+      [event.target.name]: event.target.value,
+    });
   };
 
+  // ==============================
+  // HANDLE SIGNUP
+  // ==============================
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     setMessage("");
     setError("");
 
-    // Exact password comparison
+    // Check password
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match.");
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters long.");
       return;
     }
 
     setLoading(true);
 
     try {
+      // ==============================
+      // CREATE ACCOUNT
+      // IMPORTANT:
+      // Signup uses POST /api/signup
+      // NOT /api/me
+      // ==============================
       const response = await axios.post(
-        "${import.meta.env.VITE_API_URL}/api/signup",
+        `${import.meta.env.VITE_API_URL}/api/signup`,
         {
-          name: formData.name,
-  email: formData.email,
-  password: formData.password,
-  confirmPassword: formData.confirmPassword,
+          name: formData.name.trim(),
+          email: formData.email.trim().toLowerCase(),
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
         },
         {
           withCredentials: true,
@@ -62,14 +72,26 @@ function Signup() {
         response.data.message || "Account created successfully!"
       );
 
+      // ==============================
+      // CLEAR FORM
+      // ==============================
+      setFormData({
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
+
+      // ==============================
+      // REDIRECT TO LOGIN
+      // ==============================
       setTimeout(() => {
         navigate("/login");
       }, 1000);
     } catch (err) {
-      console.error("Signup error:", err);
-
       setError(
         err.response?.data?.message ||
+          err.response?.data?.error ||
           "Unable to create account. Please try again."
       );
     } finally {
@@ -78,35 +100,44 @@ function Signup() {
   };
 
   return (
-    <section className="flex items-center justify-center min-h-screen bg-gradient-to-r from-pink-100 via-pink-200 to-pink-300">
+    <section className="flex items-center justify-center min-h-screen bg-gradient-to-r from-pink-100 via-pink-200 to-pink-300 py-10">
       <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-8">
 
-        {/* Title */}
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-2">
-          Create Account
+        {/* ==============================
+            TITLE
+        ============================== */}
+        <h2 className="text-3xl font-bold text-center text-gray-800 mb-3">
+          Create Account ✨
         </h2>
 
         <p className="text-center text-gray-600 mb-8">
-          Join MyCraftopia and start creating ✨
+          Join MyCraftopia and start creating
         </p>
 
-        {/* Success Message */}
+        {/* ==============================
+            SUCCESS MESSAGE
+        ============================== */}
         {message && (
           <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-lg text-center">
             {message}
           </div>
         )}
 
-        {/* Error Message */}
+        {/* ==============================
+            ERROR MESSAGE
+        ============================== */}
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-600 rounded-lg text-center">
             {error}
           </div>
         )}
 
+        {/* ==============================
+            SIGNUP FORM
+        ============================== */}
         <form onSubmit={handleSubmit}>
 
-          {/* Full Name */}
+          {/* FULL NAME */}
           <div className="mb-4">
             <label
               htmlFor="name"
@@ -121,13 +152,14 @@ function Signup() {
               name="name"
               value={formData.name}
               onChange={handleChange}
+              placeholder="Enter your full name"
               required
               autoComplete="name"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:outline-none"
             />
           </div>
 
-          {/* Email */}
+          {/* EMAIL */}
           <div className="mb-4">
             <label
               htmlFor="email"
@@ -142,13 +174,14 @@ function Signup() {
               name="email"
               value={formData.email}
               onChange={handleChange}
+              placeholder="Enter your email"
               required
               autoComplete="email"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:outline-none"
             />
           </div>
 
-          {/* Password */}
+          {/* PASSWORD */}
           <div className="mb-4">
             <label
               htmlFor="password"
@@ -163,14 +196,14 @@ function Signup() {
               name="password"
               value={formData.password}
               onChange={handleChange}
+              placeholder="Enter your password"
               required
-              minLength={6}
               autoComplete="new-password"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:outline-none"
             />
           </div>
 
-          {/* Confirm Password */}
+          {/* CONFIRM PASSWORD */}
           <div className="mb-6">
             <label
               htmlFor="confirmPassword"
@@ -185,14 +218,14 @@ function Signup() {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
+              placeholder="Confirm your password"
               required
-              minLength={6}
-              autoComplete="off"
+              autoComplete="new-password"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:outline-none"
             />
           </div>
 
-          {/* Signup Button */}
+          {/* SIGN UP BUTTON */}
           <button
             type="submit"
             disabled={loading}
@@ -200,10 +233,11 @@ function Signup() {
           >
             {loading ? "Creating Account..." : "Sign Up"}
           </button>
-
         </form>
 
-        {/* Login Link */}
+        {/* ==============================
+            LOGIN LINK
+        ============================== */}
         <p className="text-center text-gray-600 mt-6 text-sm">
           Already have an account?{" "}
           <Link

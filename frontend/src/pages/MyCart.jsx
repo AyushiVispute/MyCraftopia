@@ -17,13 +17,15 @@ function MyCart() {
       return "/images/default.jpg";
     }
 
+    // Cloudinary / external URL
+    if (image.startsWith("http://") || image.startsWith("https://")) {
+      return image;
+    }
+
+    // Existing local image
     const cleanPath = image
       .replace("./", "")
       .replace("images/", "");
-
-    if (cleanPath.startsWith("shopimg/")) {
-      return `/images/${cleanPath}`;
-    }
 
     return `/images/${cleanPath}`;
   };
@@ -105,6 +107,9 @@ function MyCart() {
                       src={getImagePath(item.image)}
                       alt={item.name}
                       className="w-full md:w-40 h-32 object-cover rounded-xl hover:opacity-90 transition"
+                      onError={(event) => {
+                        event.currentTarget.src = "/images/default.jpg";
+                      }}
                     />
                   </Link>
 
@@ -131,6 +136,7 @@ function MyCart() {
                       <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
 
                         <button
+                          type="button"
                           onClick={() =>
                             updateQuantity(
                               item.id,
@@ -147,6 +153,7 @@ function MyCart() {
                         </span>
 
                         <button
+                          type="button"
                           onClick={() =>
                             updateQuantity(
                               item.id,
@@ -251,6 +258,7 @@ function MyCart() {
 
             {/* Clear Cart */}
             <button
+              type="button"
               onClick={clearCart}
               className="w-full mt-3 px-5 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition"
             >
@@ -264,5 +272,4 @@ function MyCart() {
     </section>
   );
 }
-
 export default MyCart;

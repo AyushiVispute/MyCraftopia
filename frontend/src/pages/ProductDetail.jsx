@@ -25,8 +25,6 @@ function ProductDetail() {
         setProduct(response.data);
         setError("");
       } catch (err) {
-        console.error("Error fetching product:", err);
-
         setError("Product not found.");
       } finally {
         setLoading(false);
@@ -116,12 +114,10 @@ function ProductDetail() {
 
         {/* Product Details Card */}
         <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-
           <div className="grid md:grid-cols-2 gap-10 p-8 md:p-10">
 
             {/* Product Image */}
             <div className="flex items-center justify-center">
-
               <div className="w-full bg-gray-50 rounded-2xl overflow-hidden">
                 <img
                   src={`/images/${imagePath}`}
@@ -129,7 +125,6 @@ function ProductDetail() {
                   className="w-full h-[450px] object-contain"
                 />
               </div>
-
             </div>
 
             {/* Product Information */}
@@ -165,7 +160,6 @@ function ProductDetail() {
 
               {/* Product Information */}
               <div className="mt-6 border-t border-gray-200 pt-5">
-
                 <div className="flex justify-between py-2">
                   <span className="text-gray-500">
                     Category
@@ -195,19 +189,17 @@ function ProductDetail() {
                     Available
                   </span>
                 </div>
-
               </div>
 
               {/* Quantity */}
               <div className="mt-6 flex items-center gap-4">
-
                 <span className="text-gray-700 font-medium">
                   Quantity
                 </span>
 
                 <div className="flex items-center border border-gray-300 rounded-lg">
-
                   <button
+                    type="button"
                     onClick={() =>
                       setQuantity((q) => Math.max(1, q - 1))
                     }
@@ -221,6 +213,7 @@ function ProductDetail() {
                   </span>
 
                   <button
+                    type="button"
                     onClick={() =>
                       setQuantity((q) => q + 1)
                     }
@@ -228,9 +221,7 @@ function ProductDetail() {
                   >
                     +
                   </button>
-
                 </div>
-
               </div>
 
               {/* Total */}
@@ -246,8 +237,8 @@ function ProductDetail() {
 
               {/* Buttons */}
               <div className="mt-7 flex flex-wrap gap-4">
-
                 <button
+                  type="button"
                   onClick={handleAddToCart}
                   className="px-7 py-3 bg-pink-500 text-white rounded-xl font-semibold hover:bg-pink-600 transition"
                 >
@@ -260,7 +251,6 @@ function ProductDetail() {
                 >
                   Continue Shopping
                 </Link>
-
               </div>
 
             </div>

@@ -19,11 +19,9 @@ function Navbar() {
     const checkLogin = async () => {
       try {
         const response = await axios.get(
-          "${import.meta.env.VITE_API_URL}/api/me",
-          {
-            withCredentials: true,
-          }
-        );
+       `${import.meta.env.VITE_API_URL}/api/me`,
+      { withCredentials: true }
+    );
 
         if (response.data.logged_in) {
           setUser(response.data.user);
@@ -48,7 +46,7 @@ function Navbar() {
   const handleLogout = async () => {
     try {
       await axios.post(
-        "${import.meta.env.VITE_API_URL}/api/logout",
+        `${import.meta.env.VITE_API_URL}/api/logout`,
         {},
         {
           withCredentials: true,
@@ -193,22 +191,6 @@ function Navbar() {
                       className="block px-4 py-3 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-500 transition"
                     >
                       📦 My Orders
-                    </Link>
-
-                    <Link
-                      to="/profile"
-                      onClick={() => setProfileOpen(false)}
-                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-500 transition"
-                    >
-                      👤 My Profile
-                    </Link>
-
-                    <Link
-                      to="/saved-addresses"
-                      onClick={() => setProfileOpen(false)}
-                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-500 transition"
-                    >
-                      📍 Saved Addresses
                     </Link>
 
                     <div className="border-t border-gray-100 mt-1 pt-1">

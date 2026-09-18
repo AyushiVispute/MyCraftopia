@@ -40,7 +40,7 @@ function Payment() {
   // -----------------------------
   // PLACE ORDER
   // -----------------------------
-   const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async () => {
   if (!address) {
     navigate("/checkout");
     return;
@@ -67,31 +67,29 @@ function Payment() {
 
   try {
     const response = await axios.post(
-      "${import.meta.env.VITE_API_URL}/api/orders",
-      {
-        customer: {
-          name: address.name,
-          phone: address.phone,
-          address: address.address,
-          city: address.city,
-          state: address.state,
-          pincode: address.pincode,
-        },
+  `${import.meta.env.VITE_API_URL}/api/orders`,
+  {
+    customer: {
+      name: address.name,
+      email: address.email,
+      phone: address.phone,
+      address: address.address,
+      city: address.city,
+      state: address.state,
+      pincode: address.pincode,
+    },
 
-        paymentMethod: selectedPayment,
+    paymentMethod: selectedPayment,
 
-        items: cart.map((item) => ({
-          id: item.id,
-          quantity: item.quantity,
-        })),
-      },
-      {
-        withCredentials: true,
-      }
-    );
-
-    console.log("Order created:", response.data);
-
+    items: cart.map((item) => ({
+      id: item.id,
+      quantity: item.quantity,
+    })),
+  },
+  {
+    withCredentials: true,
+  }
+);
     const createdOrder = response.data.order;
 
     // Save order information temporarily
@@ -116,11 +114,6 @@ function Payment() {
     });
 
   } catch (error) {
-    console.error(
-      "Order creation failed:",
-      error
-    );
-
     if (error.response) {
 
       if (error.response.status === 401) {
@@ -243,7 +236,6 @@ function Payment() {
 
         </div>
 
-
         {/* =========================================
             PAGE TITLE
         ========================================== */}
@@ -260,7 +252,6 @@ function Payment() {
 
         </div>
 
-
         <div className="grid lg:grid-cols-3 gap-6 items-start">
 
           {/* =======================================
@@ -268,7 +259,6 @@ function Payment() {
           ======================================== */}
 
           <div className="lg:col-span-2 space-y-6">
-
 
             {/* =====================================
                 DELIVERY ADDRESS
@@ -292,7 +282,6 @@ function Payment() {
                   </Link>
 
                 </div>
-
 
                 <div className="p-5 md:p-6">
 
@@ -324,7 +313,6 @@ function Payment() {
 
                     </div>
 
-
                     <div className="min-w-0">
 
                       <div className="flex items-center gap-3 flex-wrap">
@@ -339,7 +327,6 @@ function Payment() {
 
                       </div>
 
-
                       <p className="text-sm text-gray-600 leading-6 mt-2">
                         {address.address}
                         <br />
@@ -347,7 +334,6 @@ function Payment() {
                         {address.state} -{" "}
                         {address.pincode}
                       </p>
-
 
                       <p className="text-sm text-gray-700 mt-2">
                         Mobile:{" "}
@@ -365,7 +351,6 @@ function Payment() {
               </div>
 
             )}
-
 
             {/* =====================================
                 PAYMENT CARD
@@ -385,9 +370,7 @@ function Payment() {
 
               </div>
 
-
               <div className="p-5 md:p-6">
-
 
                 {/* =================================
                     CASH ON DELIVERY
@@ -440,7 +423,6 @@ function Payment() {
 
                       </div>
 
-
                       <div>
 
                         <p className="font-semibold text-gray-800">
@@ -454,7 +436,6 @@ function Payment() {
                       </div>
 
                     </div>
-
 
                     <div
                       className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
@@ -475,7 +456,6 @@ function Payment() {
                   </div>
 
                 </div>
-
 
                 {/* =================================
                     ONLINE PAYMENT
@@ -518,7 +498,6 @@ function Payment() {
 
                       </div>
 
-
                       <div>
 
                         <p className="font-semibold text-gray-800">
@@ -532,7 +511,6 @@ function Payment() {
                       </div>
 
                     </div>
-
 
                     <div
                       className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
@@ -552,13 +530,11 @@ function Payment() {
 
                   </div>
 
-
                   {/* ONLINE CONTENT */}
 
                   {paymentMethod === "ONLINE" && (
 
                     <div className="border-t border-gray-200">
-
 
                       {/* =================================
                           OFFER BANNER
@@ -587,7 +563,6 @@ function Payment() {
                         </div>
 
                       </div>
-
 
                       {/* =================================
                           UPI
@@ -621,16 +596,13 @@ function Payment() {
 
                         </button>
 
-
                         {upiOpen && (
 
                           <div className="px-5 pb-5">
 
-
                             {/* UPI APPS */}
 
                             <div className="space-y-3">
-
 
                               {/* PHONEPE */}
 
@@ -671,7 +643,6 @@ function Payment() {
 
                                 </div>
 
-
                                 <div
                                   className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                                     selectedUpiApp === "PhonePe"
@@ -689,7 +660,6 @@ function Payment() {
                                 </div>
 
                               </button>
-
 
                               {/* GOOGLE PAY */}
 
@@ -730,7 +700,6 @@ function Payment() {
 
                                 </div>
 
-
                                 <div
                                   className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                                     selectedUpiApp === "Google Pay"
@@ -748,7 +717,6 @@ function Payment() {
                                 </div>
 
                               </button>
-
 
                               {/* PAYTM */}
 
@@ -789,7 +757,6 @@ function Payment() {
 
                                 </div>
 
-
                                 <div
                                   className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                                     selectedUpiApp === "Paytm"
@@ -809,7 +776,6 @@ function Payment() {
                               </button>
 
                             </div>
-
 
                             {/* UPI ID */}
 
@@ -859,7 +825,6 @@ function Payment() {
 
                             </div>
 
-
                             {/* ANY UPI APP */}
 
                             <button
@@ -886,7 +851,6 @@ function Payment() {
                         )}
 
                       </div>
-
 
                       {/* =================================
                           WALLET
@@ -927,7 +891,6 @@ function Payment() {
                           </span>
 
                         </button>
-
 
                         {walletOpen && (
 
@@ -985,7 +948,6 @@ function Payment() {
 
                               </div>
 
-
                               <div
                                 className={`w-5 h-5 rounded-full border-2 ${
                                   onlineMethod === "WALLET"
@@ -1001,7 +963,6 @@ function Payment() {
                         )}
 
                       </div>
-
 
                       {/* =================================
                           CARD
@@ -1034,7 +995,6 @@ function Payment() {
                           </span>
 
                         </button>
-
 
                         {cardOpen && (
 
@@ -1102,7 +1062,6 @@ function Payment() {
 
                       </div>
 
-
                       {/* =================================
                           NET BANKING
                       ================================== */}
@@ -1138,7 +1097,6 @@ function Payment() {
                           </span>
 
                         </button>
-
 
                         {netBankingOpen && (
 
@@ -1199,7 +1157,6 @@ function Payment() {
 
           </div>
 
-
           {/* =======================================
               RIGHT SIDE - ORDER SUMMARY
           ======================================== */}
@@ -1215,7 +1172,6 @@ function Payment() {
                 </h2>
 
               </div>
-
 
               <div className="p-6">
 
@@ -1242,7 +1198,6 @@ function Payment() {
 
                       </div>
 
-
                       <p className="font-semibold text-gray-800 whitespace-nowrap">
 
                         ₹
@@ -1259,9 +1214,7 @@ function Payment() {
 
                 </div>
 
-
                 <div className="border-t border-gray-200 my-6"></div>
-
 
                 {/* ITEM COUNT */}
 
@@ -1277,7 +1230,6 @@ function Payment() {
 
                 </div>
 
-
                 {/* DELIVERY */}
 
                 <div className="flex justify-between mb-4">
@@ -1292,9 +1244,7 @@ function Payment() {
 
                 </div>
 
-
                 <div className="border-t border-gray-200 my-5"></div>
-
 
                 {/* TOTAL */}
 
@@ -1310,7 +1260,6 @@ function Payment() {
 
                 </div>
 
-
                 {/* PLACE ORDER */}
 
                 <button
@@ -1324,7 +1273,6 @@ function Payment() {
                     : "Continue to Pay"}
 
                 </button>
-
 
                 {/* SECURITY */}
 
@@ -1356,7 +1304,6 @@ function Payment() {
                   Secure & safe checkout
 
                 </div>
-
 
                 <Link
                   to="/checkout"

@@ -5,7 +5,7 @@ function Contact() {
     name: "",
     email: "",
     subject: "",
-    message: ""
+    message: "",
   });
 
   const handleChange = (event) => {
@@ -13,7 +13,7 @@ function Contact() {
 
     setFormData((previous) => ({
       ...previous,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -21,7 +21,6 @@ function Contact() {
     event.preventDefault();
 
     // Backend contact API will be connected later.
-    console.log("Contact form:", formData);
   };
 
   return (
@@ -43,13 +42,11 @@ function Contact() {
 
           {/* Contact Information */}
           <div className="bg-white rounded-2xl shadow-md p-8">
-
             <h3 className="text-2xl font-bold text-gray-800 mb-6">
               Get In Touch
             </h3>
 
             <div className="space-y-6">
-
               <div>
                 <h4 className="font-semibold text-pink-500">
                   Email
@@ -79,14 +76,11 @@ function Contact() {
                   MyCraftopia Creative Studio
                 </p>
               </div>
-
             </div>
-
           </div>
 
           {/* Contact Form */}
           <div className="bg-white rounded-2xl shadow-md p-8">
-
             <form onSubmit={handleSubmit}>
 
               <div className="mb-4">
@@ -173,7 +167,6 @@ function Contact() {
               </button>
 
             </form>
-
           </div>
 
         </div>

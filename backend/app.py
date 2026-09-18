@@ -1,23 +1,59 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from functools import wraps
 from flask_mail import Mail, Message
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
+import cloudinary
+import cloudinary.uploader
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET")
+)
 # -----------------------------
 # App & Config
 # -----------------------------
 app = Flask(__name__)
 
-app.secret_key = os.getenv("SECRET_KEY", "your_secret_key")
+# ==========================================
+# SECRET KEY
+# ==========================================
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY environment variable is required.")
+app.secret_key = SECRET_KEY
 
-# Allow React frontend to communicate with Flask
+# ==========================================
+# SESSION CONFIGURATION
+# ==========================================
+app.config["SESSION_COOKIE_NAME"] = "mycraftopia_session"
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = (
+    os.getenv("FLASK_ENV", "").lower() == "production"
+)
+
+# ==========================================
+# FRONTEND URL
+# ==========================================
+allowed_origin = os.getenv(
+    "FRONTEND_URL",
+    "http://localhost:5173"
+)
+
+# ==========================================
+# CORS
+# ==========================================
 CORS(
     app,
     resources={
         r"/api/*": {
-            "origins": "http://localhost:5173"
+            "origins": allowed_origin
         }
     },
     supports_credentials=True
@@ -56,7 +92,7 @@ class Product(db.Model):
     name = db.Column(db.String(200), nullable=False)
     price = db.Column(db.Float, nullable=False)
     category = db.Column(db.String(100), nullable=False)
-    image = db.Column(db.String(200))
+    image = db.Column(db.Text)
     desc = db.Column(db.Text)
 
 
@@ -65,15 +101,16 @@ class Class(db.Model):
     name = db.Column(db.String(200), nullable=False)
     category = db.Column(db.String(100), nullable=False)
     level = db.Column(db.String(50), nullable=False)
-    image = db.Column(db.String(200))
+    image = db.Column(db.Text)
     desc = db.Column(db.Text)
-
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False, nullable=False) 
+
 
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -85,11 +122,13 @@ class Order(db.Model):
     )
 
     name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), nullable=False)  # NEW
     phone = db.Column(db.String(20), nullable=False)
     address = db.Column(db.Text, nullable=False)
     city = db.Column(db.String(100), nullable=False)
     state = db.Column(db.String(100), nullable=False)
     pincode = db.Column(db.String(10), nullable=False)
+
 
     payment_method = db.Column(
         db.String(50),
@@ -142,6 +181,21 @@ class OrderItem(db.Model):
         db.Integer,
         nullable=False
     )
+    
+
+def admin_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        user_id = session.get("user_id")
+        if not user_id:
+            return jsonify({"error": "Please login."}), 401
+
+        user = db.session.get(User, user_id)
+        if not user or not user.is_admin:
+            return jsonify({"error": "Admin access required."}), 403
+
+        return f(*args, **kwargs)
+    return wrapper
 # ============================================================
 # API ROUTES
 # ============================================================
@@ -170,6 +224,7 @@ def create_order():
     customer = data.get("customer", {})
 
     name = customer.get("name", "").strip()
+    email = customer.get("email", "").strip().lower()
     phone = customer.get("phone", "").strip()
     address = customer.get("address", "").strip()
     city = customer.get("city", "").strip()
@@ -188,6 +243,7 @@ def create_order():
     # Validate delivery information
     if not all([
         name,
+        email,
         phone,
         address,
         city,
@@ -206,15 +262,10 @@ def create_order():
 
     try:
         total_amount = 0
-
         order_items = []
 
-        # ------------------------------------------
         # Validate every product from database
-        # ------------------------------------------
-
         for item in items:
-
             product_id = item.get("id")
             quantity = item.get("quantity", 0)
 
@@ -231,23 +282,15 @@ def create_order():
                     "error": "Product quantity must be greater than zero."
                 }), 400
 
-            product = db.session.get(
-                Product,
-                product_id
-            )
+            product = db.session.get(Product, product_id)
 
             if not product:
                 return jsonify({
                     "error": f"Product {product_id} not found."
                 }), 404
 
-            # IMPORTANT:
-            # Price comes from database,
-            # not from frontend.
-            item_total = (
-                float(product.price) * quantity
-            )
-
+            # Price comes from database
+            item_total = float(product.price) * quantity
             total_amount += item_total
 
             order_items.append({
@@ -255,13 +298,11 @@ def create_order():
                 "quantity": quantity
             })
 
-        # ------------------------------------------
         # Create Order
-        # ------------------------------------------
-
         order = Order(
             user_id=user_id,
             name=name,
+            email=email,
             phone=phone,
             address=address,
             city=city,
@@ -274,15 +315,11 @@ def create_order():
 
         db.session.add(order)
 
-        # Save first so order.id is generated
+        # Generate order ID
         db.session.flush()
 
-        # ------------------------------------------
         # Create Order Items
-        # ------------------------------------------
-
         for item in order_items:
-
             product = item["product"]
             quantity = item["quantity"]
 
@@ -296,12 +333,47 @@ def create_order():
 
             db.session.add(order_item)
 
-        # ------------------------------------------
         # Save everything
-        # ------------------------------------------
-
         db.session.commit()
 
+        # Send order confirmation email
+        try:
+            msg = Message(
+                subject=f"MyCraftopia Order Confirmation - #{order.id}",
+                sender=app.config["MAIL_USERNAME"],
+                recipients=[order.email]
+            )
+
+            msg.body = f"""
+Hello {order.name},
+
+Thank you for your order from MyCraftopia! 🎨
+
+Your order has been successfully placed.
+
+Order ID: #{order.id}
+Total Amount: ₹{order.total_amount:.2f}
+Payment Method: {order.payment_method}
+Order Status: {order.status}
+
+Delivery Address:
+{order.address}
+{order.city}, {order.state} - {order.pincode}
+
+We will process your order and keep you updated about its status.
+
+Thank you for shopping with MyCraftopia! ❤️
+
+Best regards,
+MyCraftopia Team
+"""
+
+            mail.send(msg)
+
+        except Exception as email_error:
+            print("Email sending failed:", email_error)
+
+        # Return successful order response
         return jsonify({
             "message": "Order placed successfully.",
             "order": {
@@ -314,7 +386,6 @@ def create_order():
         }), 201
 
     except Exception as e:
-
         db.session.rollback()
 
         print("Order creation error:", e)
@@ -322,7 +393,14 @@ def create_order():
         return jsonify({
             "error": "Unable to place order."
         }), 500
-def api_products():
+    
+
+# =========================================================
+# GET PRODUCTS
+# =========================================================
+
+@app.route("/api/products", methods=["GET"])
+def get_products():
 
     category = request.args.get("category")
 
@@ -344,6 +422,111 @@ def api_products():
         }
         for product in products
     ])
+
+
+# =========================================================
+# ADD PRODUCT - ADMIN ONLY
+# =========================================================
+
+@app.route("/api/products", methods=["POST"])
+@admin_required
+def create_product():
+
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({
+                "success": False,
+                "message": "No product data received."
+            }), 400
+
+        name = data.get("name", "").strip()
+        price = data.get("price")
+        category = data.get("category", "").strip()
+        image = data.get("image", "").strip()
+        desc = data.get("desc", "").strip()
+
+        # -----------------------------
+        # Validate fields
+        # -----------------------------
+
+        if not name:
+            return jsonify({
+                "success": False,
+                "message": "Product name is required."
+            }), 400
+
+        if price is None or price == "":
+            return jsonify({
+                "success": False,
+                "message": "Product price is required."
+            }), 400
+
+        if not category:
+            return jsonify({
+                "success": False,
+                "message": "Product category is required."
+            }), 400
+
+        if not image:
+            return jsonify({
+                "success": False,
+                "message": "Please upload a product image."
+            }),400
+
+        # -----------------------------
+        # Convert price
+        # -----------------------------
+
+        try:
+            price = float(price)
+        except (ValueError, TypeError):
+
+            return jsonify({
+                "success": False,
+                "message": "Invalid product price."
+            }), 400
+
+        # -----------------------------
+        # Create product
+        # -----------------------------
+
+        product = Product(
+            name=name,
+            price=price,
+            category=category,
+            image=image,
+            desc=desc
+        )
+
+        db.session.add(product)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Product added successfully.",
+            "product": {
+                "id": product.id,
+                "name": product.name,
+                "price": product.price,
+                "category": product.category,
+                "image": product.image,
+                "desc": product.desc
+            }
+        }), 201
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print("CREATE PRODUCT ERROR:", str(e))
+
+        return jsonify({
+            "success": False,
+            "message": "Failed to add product.",
+            "error": str(e)
+        }), 500
 
 
 # -----------------------------
@@ -518,15 +701,15 @@ def api_login():
     session["user_name"] = user.name
 
     return jsonify({
-        "success": True,
-        "message": "Login successful",
-        "user": {
-            "id": user.id,
-            "name": user.name,
-            "email": user.email
-        }
-    })
-
+    "success": True,
+    "message": "Login successful",
+    "user": {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "is_admin": user.is_admin
+    }
+})
 
 # -----------------------------
 # Current User API
@@ -539,25 +722,24 @@ def api_me():
     if not user_id:
         return jsonify({
             "logged_in": False
-        })
+        }), 200
 
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
 
     if not user:
         session.clear()
 
         return jsonify({
             "logged_in": False
-        })
+        }), 200
 
     return jsonify({
         "logged_in": True,
-        "user": {
-            "id": user.id,
-            "name": user.name,
-            "email": user.email
-        }
-    })
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "is_admin": bool(user.is_admin)
+    }), 200
 
 
 # -----------------------------
@@ -622,168 +804,194 @@ def api_contact():
         "message": "Your message has been sent successfully"
     })
 
+@app.route("/api/upload-image", methods=["POST"])
+def upload_image():
+    try:
+        # Check whether an image was sent
+        if "image" not in request.files:
+            return jsonify({
+                "success": False,
+                "message": "Please upload a product image."
+            }), 400
 
-# ============================================================
-# OLD FLASK/JINJA ROUTES
-# ============================================================
+        image = request.files["image"]
 
-@app.route("/")
-def home():
+        # Check filename
+        if image.filename == "":
+            return jsonify({
+                "success": False,
+                "message": "Please select an image."
+            }), 400
 
-    products = Product.query.limit(6).all()
-
-    return render_template(
-        "home.html",
-        products=products
-    )
-
-
-@app.route("/classes")
-def classes():
-
-    search = request.args.get("search")
-    level = request.args.get("level")
-    category = request.args.get("category")
-
-    query = Class.query
-
-    if search:
-        query = query.filter(
-            Class.name.ilike(f"%{search}%")
+        # Upload image to Cloudinary
+        result = cloudinary.uploader.upload(
+            image,
+            folder="mycraftopia/products"
         )
 
-    if level:
-        query = query.filter(
-            Class.level.ilike(level)
-        )
+        image_url = result.get("secure_url")
 
-    if category:
-        query = query.filter(
-            Class.category.ilike(category)
-        )
+        if not image_url:
+            return jsonify({
+                "success": False,
+                "message": "Image upload failed."
+            }), 500
 
-    classes = query.all()
+        return jsonify({
+            "success": True,
+            "message": "Image uploaded successfully.",
+            "url": image_url
+        }), 200
 
-    return render_template(
-        "classes.html",
-        classes=classes
+    except Exception as e:
+        print("IMAGE UPLOAD ERROR:", str(e))
+
+        return jsonify({
+            "success": False,
+            "message": "Failed to upload image.",
+            "error": str(e)
+        }), 500
+
+
+@app.route("/api/products/<int:product_id>", methods=["PUT"])
+@admin_required
+def update_product(product_id):
+    product = db.session.get(Product, product_id)
+    if not product:
+        return jsonify({"error": "Product not found."}), 404
+
+    data = request.get_json() or {}
+
+    if "name" in data: product.name = data["name"].strip()
+    if "category" in data: product.category = data["category"].strip()
+    if "image" in data: product.image = data["image"].strip()
+    if "desc" in data: product.desc = data["desc"].strip()
+    if "price" in data:
+        try:
+            product.price = float(data["price"])
+        except (TypeError, ValueError):
+            return jsonify({"error": "price must be a number."}), 400
+
+    db.session.commit()
+    return jsonify({
+        "id": product.id, "name": product.name, "price": product.price,
+        "category": product.category, "image": product.image, "desc": product.desc
+    })
+
+
+@app.route("/api/products/<int:product_id>", methods=["DELETE"])
+@admin_required
+def delete_product(product_id):
+    product = db.session.get(Product, product_id)
+    if not product:
+        return jsonify({"error": "Product not found."}), 404
+
+    db.session.delete(product)
+    db.session.commit()
+    return jsonify({"message": "Product deleted."})
+
+
+# -----------------------------
+# Class CRUD (admin only)
+# -----------------------------
+@app.route("/api/classes", methods=["POST"])
+@admin_required
+def create_class():
+    data = request.get_json() or {}
+    name = data.get("name", "").strip()
+    category = data.get("category", "").strip()
+    level = data.get("level", "").strip()
+
+    if not name or not category or not level:
+        return jsonify({"error": "name, category, and level are required."}), 400
+
+    class_item = Class(
+        name=name,
+        category=category,
+        level=level,
+        image=data.get("image", "").strip(),
+        desc=data.get("desc", "").strip()
     )
+    db.session.add(class_item)
+    db.session.commit()
+
+    return jsonify({
+        "id": class_item.id, "name": class_item.name, "category": class_item.category,
+        "level": class_item.level, "image": class_item.image, "desc": class_item.desc
+    }), 201
 
 
-@app.route("/class/<int:class_id>")
-def class_detail(class_id):
+@app.route("/api/classes/<int:class_id>", methods=["PUT"])
+@admin_required
+def update_class(class_id):
+    class_item = db.session.get(Class, class_id)
+    if not class_item:
+        return jsonify({"error": "Class not found."}), 404
 
-    class_item = Class.query.get_or_404(class_id)
+    data = request.get_json() or {}
+    if "name" in data: class_item.name = data["name"].strip()
+    if "category" in data: class_item.category = data["category"].strip()
+    if "level" in data: class_item.level = data["level"].strip()
+    if "image" in data: class_item.image = data["image"].strip()
+    if "desc" in data: class_item.desc = data["desc"].strip()
 
-    return render_template(
-        "class_detail.html",
-        class_item=class_item
-    )
-
-
-@app.route("/shop")
-@app.route("/shop/<category>")
-def shop(category=None):
-
-    query = Product.query
-
-    if category:
-        query = query.filter_by(
-            category=category
-        )
-
-    products = query.all()
-
-    return render_template(
-        "shop.html",
-        products=products,
-        category=category
-    )
+    db.session.commit()
+    return jsonify({
+        "id": class_item.id, "name": class_item.name, "category": class_item.category,
+        "level": class_item.level, "image": class_item.image, "desc": class_item.desc
+    })
 
 
-@app.route("/mycard")
-def mycard():
+@app.route("/api/classes/<int:class_id>", methods=["DELETE"])
+@admin_required
+def delete_class(class_id):
+    class_item = db.session.get(Class, class_id)
+    if not class_item:
+        return jsonify({"error": "Class not found."}), 404
 
-    cart = session.get("cart", {})
-
-    total = sum(
-        item["price"] * item["quantity"]
-        for item in cart.values()
-    )
-
-    return render_template(
-        "mycard.html",
-        cart=cart,
-        total=total
-    )
-    
+    db.session.delete(class_item)
+    db.session.commit()
+    return jsonify({"message": "Class deleted."})
 
 
-@app.route("/add-to-cart/<int:product_id>")
-def add_to_cart(product_id):
+# -----------------------------
+# Admin: view & update orders
+# -----------------------------
+@app.route("/api/admin/orders", methods=["GET"])
+@admin_required
+def admin_get_orders():
+    orders = Order.query.order_by(Order.id.desc()).all()
 
-    product = Product.query.get_or_404(product_id)
+    result = [{
+        "id": o.id, "name": o.name, "phone": o.phone,
+        "total_amount": o.total_amount, "status": o.status,
+        "payment_method": o.payment_method,
+        "items": [
+            {"product_name": i.product_name, "quantity": i.quantity, "price": i.price}
+            for i in o.items
+        ]
+    } for o in orders]
 
-    cart = session.get("cart", {})
-
-    if str(product_id) in cart:
-
-        cart[str(product_id)]["quantity"] += 1
-
-    else:
-
-        cart[str(product_id)] = {
-            "id": product.id,
-            "name": product.name,
-            "price": product.price,
-            "image": product.image,
-            "quantity": 1
-        }
-
-    session["cart"] = cart
-
-    return redirect(url_for("mycard"))
+    return jsonify(result)
 
 
-@app.route("/update-cart/<int:product_id>", methods=["POST"])
-def update_cart(product_id):
+@app.route("/api/admin/orders/<int:order_id>/status", methods=["PUT"])
+@admin_required
+def update_order_status(order_id):
+    order = db.session.get(Order, order_id)
+    if not order:
+        return jsonify({"error": "Order not found."}), 404
 
-    cart = session.get("cart", {})
+    data = request.get_json() or {}
+    status = data.get("status")
+    valid_statuses = ["Pending", "Confirmed", "Shipped", "Delivered", "Cancelled"]
 
-    if str(product_id) in cart:
+    if status not in valid_statuses:
+        return jsonify({"error": f"status must be one of {valid_statuses}"}), 400
 
-        quantity = int(
-            request.form.get("quantity", 1)
-        )
-
-        if quantity <= 0:
-            cart.pop(str(product_id))
-        else:
-            cart[str(product_id)]["quantity"] = quantity
-
-        session["cart"] = cart
-
-    return redirect(url_for("mycard"))
-
-
-@app.route("/remove-from-cart/<int:product_id>")
-def remove_from_cart(product_id):
-
-    cart = session.get("cart", {})
-
-    if str(product_id) in cart:
-        cart.pop(str(product_id))
-        session["cart"] = cart
-
-    return redirect(url_for("mycard"))
-
-
-@app.route("/clear-cart")
-def clear_cart():
-
-    session.pop("cart", None)
-
-    return redirect(url_for("mycard"))
+    order.status = status
+    db.session.commit()
+    return jsonify({"message": "Order status updated.", "status": order.status})
 
 # -----------------------------
 # My Orders API
@@ -986,6 +1194,6 @@ if __name__ == "__main__":
         db.create_all()
 
     app.run(
-        debug=True,
-        port=5000
+        debug=os.getenv("FLASK_ENV", "").lower() != "production",
+        port=int(os.getenv("PORT", 5000))
     )

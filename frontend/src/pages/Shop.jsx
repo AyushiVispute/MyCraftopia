@@ -23,12 +23,19 @@ function Shop() {
         setError("");
 
         const response = await axios.get(
-          "${import.meta.env.VITE_API_URL}/api/products"
+          `${import.meta.env.VITE_API_URL}/api/products`
         );
 
-        setProducts(response.data);
+        const data = response.data;
+
+        setProducts(
+          Array.isArray(data)
+            ? data
+            : Array.isArray(data.products)
+              ? data.products
+              : []
+        );
       } catch (err) {
-        console.error("Error fetching products:", err);
         setError("Unable to load products.");
       } finally {
         setLoading(false);
@@ -113,6 +120,10 @@ function Shop() {
 
   // Filter Products
   const filteredProducts = useMemo(() => {
+    if (!Array.isArray(products)) {
+      return [];
+    }
+
     if (!category) {
       return products;
     }
@@ -190,10 +201,23 @@ function Shop() {
             !error &&
             filteredProducts.length > 0 &&
             filteredProducts.map((product) => {
+              const getImagePath = (image) => {
+                if (!image) {
+                  return "/images/default.jpg";
+                }
 
-              const imagePath = product.image
-                ?.replace("./", "")
-                .replace("images/", "");
+                // Cloudinary / external URL
+                if (image.startsWith("http://") || image.startsWith("https://")) {
+                  return image;
+                }
+
+                // Existing local image
+                const cleanPath = image
+                  .replace("./", "")
+                  .replace("images/", "");
+
+                return `/images/${cleanPath}`;
+              };
 
               return (
                 <div
@@ -207,15 +231,9 @@ function Shop() {
                     className="block"
                   >
                     <img
-                      src={`/images/${imagePath}`}
+                     src={getImagePath(product.image)}
                       className="product-image w-full h-56 object-cover"
                       alt={product.name}
-                      onError={(event) => {
-                        console.error(
-                          "Image failed:",
-                          event.currentTarget.src
-                        );
-                      }}
                     />
                   </Link>
 

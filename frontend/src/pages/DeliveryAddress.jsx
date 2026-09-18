@@ -11,6 +11,7 @@ function DeliveryAddress() {
         ? JSON.parse(saved)
         : {
             name: "",
+            email: "",
             phone: "",
             address: "",
             city: "",
@@ -21,6 +22,7 @@ function DeliveryAddress() {
     } catch {
       return {
         name: "",
+        email: "",
         phone: "",
         address: "",
         city: "",
@@ -113,6 +115,7 @@ function DeliveryAddress() {
                   Add Delivery Address
                 </h2>
               </div>
+              
 
 
               <form onSubmit={handleContinue}>
@@ -137,6 +140,22 @@ function DeliveryAddress() {
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
                       />
                     </div>
+                    <div>
+    <label className="block text-sm font-semibold text-gray-700 mb-2">
+      Email Address
+    </label>
+
+    <input
+      type="email"
+      name="email"
+      value={address.email}
+      onChange={handleChange}
+      placeholder="Enter email address"
+      required
+      className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+    />
+  </div>
+
 
 
                     <div>
@@ -308,7 +327,8 @@ function DeliveryAddress() {
 
                 </div>
 
-              </form>
+          </form>
+          
 
             </div>
 
