@@ -1,4 +1,7 @@
+
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import axios from "axios";
 
 import {
   Swiper,
@@ -15,81 +18,132 @@ import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
 
+// =====================================
+// IMAGE HELPER FOR PRODUCTS
+// =====================================
+const getProductImage = (image) => {
+  if (!image) return "/images/default.jpg";
+
+  if (
+    image.startsWith("http://") ||
+    image.startsWith("https://")
+  ) {
+    return image;
+  }
+
+  const cleanPath = image
+    .replace(/^\.\/+/, "")
+    .replace(/^images\//, "");
+
+  return `/images/${cleanPath}`;
+};
+
+// =====================================
+// HOME COMPONENT
+// =====================================
 function Home() {
-  const [counters, setCounters] = useState({
-    students: 0,
-    classes: 0,
-    customers: 0
-  });
 
-  /*
-   * Temporary products.
-   *
-   * Later these will come from your Flask backend.
-   * The design will remain exactly the same.
-   */
-  const products = [
-    {
-      id: 1,
-      name: "Creative Craft",
-      image: "craft.jpg",
-      price: 499,
-      desc: "Explore creative handmade craft materials and techniques."
-    },
-    {
-      id: 2,
-      name: "Painting Kit",
-      image: "paint.webp",
-      price: 599,
-      desc: "Complete painting kit for creative artists and beginners."
-    },
-    {
-      id: 3,
-      name: "Crochet Kit",
-      image: "crochet.webp",
-      price: 699,
-      desc: "Learn and create beautiful crochet designs with this kit."
-    }
-  ];
+  const [products, setProducts] = useState([]);
+  const [classes, setClasses] = useState([]);
 
-  /*
-   * Animated counters
-   */
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [loadingClasses, setLoadingClasses] = useState(true);
+
+  const [productError, setProductError] = useState("");
+  const [classError, setClassError] = useState("");
+
+  const API = import.meta.env.VITE_API_URL;
+
+  // =====================================
+  // FETCH PRODUCTS FROM FLASK
+  // =====================================
   useEffect(() => {
-    const targets = {
-      students: 500,
-      classes: 50,
-      customers: 100
-    };
 
-    const duration = 1500;
-    const startTime = Date.now();
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get(
+          `${API}/api/products`
+        );
 
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
+        const data = response.data;
 
-      setCounters({
-        students: Math.floor(targets.students * progress),
-        classes: Math.floor(targets.classes * progress),
-        customers: Math.floor(targets.customers * progress)
-      });
+        const productList = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.products)
+            ? data.products
+            : [];
 
-      if (progress < 1) {
-        requestAnimationFrame(animate);
+        setProducts(productList);
+
+      } catch (error) {
+        console.error("Products fetching error:", error);
+        setProductError("Unable to load products.");
+      } finally {
+        setLoadingProducts(false);
       }
     };
 
-    animate();
-  }, []);
+    fetchProducts();
 
+  }, [API]);
+
+  // =====================================
+  // FETCH CLASSES FROM FLASK
+  // =====================================
+  useEffect(() => {
+
+    const fetchClasses = async () => {
+      try {
+        const response = await axios.get(
+          `${API}/api/classes`
+        );
+
+        const data = response.data;
+
+        const classList = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.classes)
+            ? data.classes
+            : [];
+
+        setClasses(classList);
+
+      } catch (error) {
+        console.error("Classes fetching error:", error);
+        setClassError("Unable to load classes.");
+      } finally {
+        setLoadingClasses(false);
+      }
+    };
+
+    fetchClasses();
+
+  }, [API]);
+
+  // =====================================
+  // CATEGORY DATA
+  // =====================================
+  const categories = [
+    { name: "Craft Kits", icon: "🎨" },
+    { name: "Knitting", icon: "🧶" },
+    { name: "Sewing", icon: "🪡" },
+    { name: "Painting", icon: "🖌️" },
+    { name: "Quilting", icon: "🧵" },
+  ];
+
+  // =====================================
+  // RETURN
+  // =====================================
   return (
     <>
-      {/* =========================
+
+      {/* =====================================
           HERO SLIDER
-      ========================== */}
+          ORIGINAL DESIGN - UNCHANGED
+      ===================================== */}
 
       <section className="bg-white">
+
         <Swiper
           className="mySwiper"
           spaceBetween={30}
@@ -116,9 +170,10 @@ function Home() {
               className="relative h-[80vh] flex items-center justify-center bg-cover bg-center"
               style={{
                 backgroundImage:
-                  "url('/images/1.jpg')"
+                  "url('src/images/1.jpg')"
               }}
             >
+
               <div className="absolute inset-0 bg-black/40"></div>
 
               <div className="relative z-10 text-center text-white px-6 md:px-12">
@@ -153,9 +208,10 @@ function Home() {
               className="relative h-[80vh] flex items-center justify-center bg-cover bg-center"
               style={{
                 backgroundImage:
-                  "url('/images/2jpg.jpg')"
+                  "url('src/images/2.jpg')"
               }}
             >
+
               <div className="absolute inset-0 bg-black/40"></div>
 
               <div className="relative z-10 text-center text-white px-6 md:px-12">
@@ -190,9 +246,10 @@ function Home() {
               className="relative h-[80vh] flex items-center justify-center bg-cover bg-center"
               style={{
                 backgroundImage:
-                  "url('/images/3.webp')"
+                  "url('src/images/3.webp')"
               }}
             >
+
               <div className="absolute inset-0 bg-black/40"></div>
 
               <div className="relative z-10 text-center text-white px-6 md:px-12">
@@ -223,43 +280,66 @@ function Home() {
       </section>
 
 
-      {/* =========================
-          ANIMATED COUNTERS
-      ========================== */}
+      {/* =====================================
+          WELCOME SECTION
+      ===================================== */}
 
-      <section className="py-16 bg-gray-100">
+      <section className="py-16 px-6 bg-[#fffaf7]">
 
-        <div className="container mx-auto grid md:grid-cols-3 gap-8 text-center">
+        <div className="max-w-4xl mx-auto text-center">
+
+          <p className="text-pink-500 font-semibold tracking-widest uppercase">
+            A Little World of Creativity
+          </p>
+
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mt-3">
+            Welcome to MyCraftopia
+          </h2>
+
+          <p className="text-gray-600 text-lg mt-5 leading-8">
+            Your happy place for handmade treasures, creative
+            craft kits and inspiring learning experiences.
+            Discover the joy of creating something beautiful
+            with your own hands.
+          </p>
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================
+          LIVE STATISTICS
+      ===================================== */}
+
+      <section className="py-12 bg-[#fdf0ec]">
+
+        <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
 
           <div>
-            <h2 className="text-5xl font-bold text-pink-500">
-              {counters.students}+
+            <h2 className="text-4xl font-bold text-pink-500">
+              {products.length}+
             </h2>
-
             <p className="mt-2 text-gray-700 text-lg">
-              Students
+              Handmade Products
             </p>
           </div>
 
-
           <div>
-            <h2 className="text-5xl font-bold text-pink-500">
-              {counters.classes}+
+            <h2 className="text-4xl font-bold text-pink-500">
+              {classes.length}+
             </h2>
-
             <p className="mt-2 text-gray-700 text-lg">
-              Classes
+              Creative Classes
             </p>
           </div>
 
-
           <div>
-            <h2 className="text-5xl font-bold text-pink-500">
-              {counters.customers}+
+            <h2 className="text-4xl font-bold text-pink-500">
+              {categories.length}+
             </h2>
-
             <p className="mt-2 text-gray-700 text-lg">
-              Happy Customers
+              Craft Categories
             </p>
           </div>
 
@@ -268,82 +348,171 @@ function Home() {
       </section>
 
 
-      {/* =========================
+      {/* =====================================
+          SHOP BY CATEGORY
+      ===================================== */}
+
+      <section className="py-20 px-6 bg-white">
+
+        <div className="max-w-7xl mx-auto">
+
+          <div className="text-center mb-12">
+
+            <p className="text-pink-500 font-semibold tracking-wider">
+              EXPLORE YOUR INTERESTS
+            </p>
+
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mt-3">
+              Shop By Category
+            </h2>
+
+            <p className="text-gray-600 mt-3">
+              Find everything you need for your next creative project.
+            </p>
+
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+
+            {categories.map((item) => (
+
+              <Link
+                key={item.name}
+                to={`/shop?category=${encodeURIComponent(item.name)}`}
+                className="bg-[#fff5f2] rounded-2xl p-7 text-center shadow-sm hover:shadow-xl hover:-translate-y-2 transition duration-300"
+              >
+
+                <div className="text-5xl">
+                  {item.icon}
+                </div>
+
+                <h3 className="font-bold text-lg mt-4 text-gray-800">
+                  {item.name}
+                </h3>
+
+                <p className="text-pink-500 mt-3 text-sm font-semibold">
+                  Explore →
+                </p>
+
+              </Link>
+
+            ))}
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================
           TRENDING PRODUCTS
-      ========================== */}
+          FETCH FROM SHOP API
+      ===================================== */}
 
-      <section
-        className="relative py-20 bg-cover bg-center"
-        style={{
-          backgroundImage:
-            "url('/images/blue.jpeg')"
-        }}
-      >
+      <section className="py-20 px-6 bg-[#fffaf7]">
 
-        <div className="absolute inset-0 bg-white/50"></div>
+        <div className="max-w-7xl mx-auto">
 
-        <div className="container mx-auto px-6 relative z-10">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-12">
 
-          <h2 className="text-4xl font-bold text-center text-gray-800 mb-12">
-            ✨ Trending Products
-          </h2>
+            <div>
+
+              <p className="text-pink-500 font-semibold tracking-wider">
+                HANDPICKED FOR YOU
+              </p>
+
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mt-3">
+                ✨ Trending Products
+              </h2>
+
+              <p className="text-gray-600 mt-3">
+                Beautiful handmade products made with love.
+              </p>
+
+            </div>
+
+            <Link
+              to="/shop"
+              className="px-7 py-3 bg-pink-500 text-white rounded-full hover:bg-pink-600 transition shadow-md"
+            >
+              View All Products →
+            </Link>
+
+          </div>
 
 
-          <Swiper
-            className="productSwiper"
-            slidesPerView={1}
-            spaceBetween={30}
-            centeredSlides={true}
-            loop={true}
-            autoplay={{
-              delay: 3000,
-              disableOnInteraction: false
-            }}
-            navigation={true}
-            pagination={{
-              clickable: true
-            }}
-            modules={[
-              Autoplay,
-              Pagination,
-              Navigation
-            ]}
-          >
+          {loadingProducts ? (
 
-            {products.map((product) => (
+            <p className="text-center py-12 text-gray-500">
+              Loading products...
+            </p>
 
-              <SwiperSlide key={product.id}>
+          ) : productError ? (
 
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition max-w-4xl mx-auto">
+            <p className="text-center py-12 text-red-500">
+              {productError}
+            </p>
 
-                  <img
-                    src={`/images/${product.image}`}
-                    className="w-full h-[28rem] object-cover"
-                    alt={product.name}
-                  />
+          ) : products.length > 0 ? (
 
-                  <div className="p-6 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
 
-                    <h3 className="text-2xl font-semibold text-gray-800">
-                      {product.name}
-                    </h3>
+              {products.slice(0, 4).map((product) => (
 
-                    <p className="text-gray-600 mt-3 text-lg">
-                      {product.desc.slice(0, 120)}...
+                <div
+                  key={product.id}
+                  className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-2 transition duration-300 group"
+                >
+
+                  <Link to={`/shop/${product.id}`}>
+
+                    <div className="h-64 overflow-hidden bg-gray-100">
+
+                      <img
+                        src={getProductImage(product.image)}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
+                        onError={(e) => {
+                          e.currentTarget.src = "/images/default.jpg";
+                        }}
+                      />
+
+                    </div>
+
+                  </Link>
+
+
+                  <div className="p-5">
+
+                    <span className="text-sm text-pink-500 font-semibold">
+                      {product.category}
+                    </span>
+
+                    <Link to={`/shop/${product.id}`}>
+
+                      <h3 className="font-bold text-lg mt-2 text-gray-800 hover:text-pink-500 transition">
+                        {product.name}
+                      </h3>
+
+                    </Link>
+
+                    <p className="text-gray-500 text-sm mt-2 line-clamp-2">
+                      {product.desc}
                     </p>
 
-                    <div className="flex justify-between items-center mt-6">
+                    <div className="flex justify-between items-center mt-5">
 
-                      <span className="text-pink-600 font-bold text-2xl">
-                        ₹{product.price}
+                      <span className="text-pink-600 font-bold text-xl">
+                        ₹{Number(product.price).toFixed(0)}
                       </span>
 
-                      <a
-                        href="/shop"
-                        className="px-6 py-3 bg-pink-500 text-white text-base rounded-lg hover:bg-pink-600 transition"
+                      <Link
+                        to={`/shop/${product.id}`}
+                        className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition text-sm"
                       >
-                        Shop Now
-                      </a>
+                        View Product
+                      </Link>
 
                     </div>
 
@@ -351,26 +520,233 @@ function Home() {
 
                 </div>
 
-              </SwiperSlide>
+              ))}
 
-            ))}
+            </div>
 
-          </Swiper>
+          ) : (
+
+            <p className="text-center py-12 text-gray-500">
+              No products available.
+            </p>
+
+          )}
 
         </div>
 
       </section>
 
 
-      {/* =========================
+      {/* =====================================
+          EXPLORE CLASSES
+          FETCH FROM CLASSES API
+      ===================================== */}
+
+      <section className="py-20 px-6 bg-[#fdf0ec]">
+
+        <div className="max-w-7xl mx-auto">
+
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-12">
+
+            <div>
+
+              <p className="text-pink-500 font-semibold tracking-wider">
+                LEARN SOMETHING NEW
+              </p>
+
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mt-3">
+                Explore Our Classes
+              </h2>
+
+              <p className="text-gray-600 mt-3">
+                Learn new skills and discover your creativity.
+              </p>
+
+            </div>
+
+            <Link
+              to="/classes"
+              className="px-7 py-3 border-2 border-pink-500 text-pink-600 rounded-full hover:bg-pink-500 hover:text-white transition"
+            >
+              View All Classes →
+            </Link>
+
+          </div>
+
+
+          {loadingClasses ? (
+
+            <p className="text-center py-12 text-gray-500">
+              Loading classes...
+            </p>
+
+          ) : classError ? (
+
+            <p className="text-center py-12 text-red-500">
+              {classError}
+            </p>
+
+          ) : classes.length > 0 ? (
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+
+              {classes.slice(0, 3).map((item) => (
+
+                <Link
+                  key={item.id}
+                  to={`/classes/${item.id}`}
+                  className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-2 transition duration-300 group"
+                >
+
+                  <div className="h-64 overflow-hidden bg-gray-100">
+
+                    <img
+                      src={item.image || "/images/default-class.jpg"}
+                      alt={item.name || "Craft Class"}
+                      className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
+                      onError={(e) => {
+                        e.currentTarget.src = "/images/default-class.jpg";
+                      }}
+                    />
+
+                  </div>
+
+
+                  <div className="p-6">
+
+                    <span className="text-pink-500 text-sm font-semibold">
+                      {item.category || "Craft"}
+                    </span>
+
+                    <h3 className="text-xl font-bold mt-2 text-gray-800">
+                      {item.name || "Creative Class"}
+                    </h3>
+
+                    <p className="text-gray-600 mt-3 line-clamp-3">
+                      {item.desc || "Learn creative skills with our expert instructors."}
+                    </p>
+
+                    <div className="flex justify-between items-center mt-5">
+
+                      <span className="text-sm text-gray-500">
+                        {item.level || "Beginner"}
+                      </span>
+
+                      <span className="text-pink-600 font-semibold">
+                        View Details →
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                </Link>
+
+              ))}
+
+            </div>
+
+          ) : (
+
+            <p className="text-center py-12 text-gray-500">
+              No classes available.
+            </p>
+
+          )}
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================
+          WHY CHOOSE MYCRAFTOPIA
+      ===================================== */}
+
+      <section className="py-20 px-6 bg-white">
+
+        <div className="max-w-7xl mx-auto">
+
+          <div className="text-center mb-14">
+
+            <p className="text-pink-500 font-semibold tracking-wider">
+              WHY MYCRAFTOPIA?
+            </p>
+
+            <h2 className="text-3xl md:text-4xl font-bold mt-3 text-gray-800">
+              Made With Love, Shared With You
+            </h2>
+
+            <p className="text-gray-600 mt-3">
+              More than shopping, it's a world of creativity.
+            </p>
+
+          </div>
+
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
+
+            {[
+              {
+                icon: "🎨",
+                title: "Creative Products",
+                desc: "Discover unique handmade products and craft supplies."
+              },
+              {
+                icon: "💝",
+                title: "Made With Love",
+                desc: "Every creation brings its own special charm."
+              },
+              {
+                icon: "🧶",
+                title: "Learn New Skills",
+                desc: "Join workshops and improve your creative skills."
+              },
+              {
+                icon: "🛍️",
+                title: "Easy Shopping",
+                desc: "Enjoy a simple and convenient shopping experience."
+              }
+            ].map((item) => (
+
+              <div
+                key={item.title}
+                className="bg-[#fff5f2] rounded-2xl p-8 text-center hover:shadow-lg transition duration-300"
+              >
+
+                <div className="text-5xl">
+                  {item.icon}
+                </div>
+
+                <h3 className="font-bold text-lg mt-5 text-gray-800">
+                  {item.title}
+                </h3>
+
+                <p className="text-gray-600 mt-3 leading-7">
+                  {item.desc}
+                </p>
+
+              </div>
+
+            ))}
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================
           TESTIMONIALS
-      ========================== */}
+          ORIGINAL PHOTOGRAPHS PRESERVED
+      ===================================== */}
 
       <section
         className="relative py-20 bg-cover bg-center"
         style={{
           backgroundImage:
-            "url('/images/bg1.pg.jpg')"
+            "url('src/images/bg1.pg.jpg')"
         }}
       >
 
@@ -378,7 +754,7 @@ function Home() {
 
         <div className="container mx-auto px-6 relative z-10">
 
-          <h2 className="text-4xl font-bold text-center text-gray-800 mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">
             💬 What Our Students Say
           </h2>
 
@@ -417,13 +793,13 @@ function Home() {
                 <div className="mt-6 flex flex-col items-center">
 
                   <img
-                    src="/images/student1.jpg"
+                    src="src/images/student1.png"
                     className="w-16 h-16 rounded-full object-cover border-2 border-pink-500"
                     alt="Student 1"
                   />
 
                   <h3 className="mt-3 font-semibold text-gray-800">
-                    Prayank Sharma
+                    Prayanka Sharma
                   </h3>
 
                   <span className="text-sm text-pink-500">
@@ -450,7 +826,7 @@ function Home() {
                 <div className="mt-6 flex flex-col items-center">
 
                   <img
-                    src="/images/parent.jpg"
+                    src="src/images/parent.jpg"
                     className="w-16 h-16 rounded-full object-cover border-2 border-pink-500"
                     alt="Parent"
                   />
@@ -483,7 +859,7 @@ function Home() {
                 <div className="mt-6 flex flex-col items-center">
 
                   <img
-                    src="/images/student.jpg"
+                    src="src/images/student.jpg"
                     className="w-16 h-16 rounded-full object-cover border-2 border-pink-500"
                     alt="Student 3"
                   />
@@ -507,6 +883,12 @@ function Home() {
         </div>
 
       </section>
+
+
+      
+
+      
+
     </>
   );
 }

@@ -77,9 +77,7 @@ function ProductDetail() {
     );
   }
 
-  const imagePath = product.image
-    ?.replace("./", "")
-    .replace("images/", "");
+  const imagePath = product.image?.trim();
 
   const totalPrice = Number(product.price) * quantity;
 
@@ -120,10 +118,13 @@ function ProductDetail() {
             <div className="flex items-center justify-center">
               <div className="w-full bg-gray-50 rounded-2xl overflow-hidden">
                 <img
-                  src={`/images/${imagePath}`}
-                  alt={product.name}
-                  className="w-full h-[450px] object-contain"
-                />
+  src={imagePath}
+  alt={product.name}
+  className="w-full h-[450px] object-contain"
+  onError={(e) => {
+    console.error("Image failed:", imagePath);
+  }}
+/>
               </div>
             </div>
 

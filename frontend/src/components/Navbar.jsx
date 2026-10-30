@@ -85,7 +85,7 @@ function Navbar() {
             className="flex items-center gap-3 shrink-0"
           >
             <img
-              src="/images/logo.png"
+              src="src/images/logo.png"
               alt="MyCraftopia Logo"
               className="h-12 w-12 rounded-full border-2 border-pink-500 object-cover"
             />

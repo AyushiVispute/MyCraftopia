@@ -11,7 +11,7 @@ function Footer() {
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <img
-                src="/images/logo.png"
+                src="src/images/logo.png"
                 alt="MyCraftopia Logo"
                 className="h-12 w-12 rounded-full border-2 border-pink-500 object-cover"
               />
