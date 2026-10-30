@@ -41,24 +41,17 @@ app.config["SESSION_COOKIE_SECURE"] = (
 # ==========================================
 # FRONTEND URL
 # ==========================================
-allowed_origin = os.getenv(
-    "FRONTEND_URL",
-    "http://localhost:5173"
-)
+allowed_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://mycraftopia-delta.vercel.app"
+]
 
-# ==========================================
-# CORS
-# ==========================================
 CORS(
     app,
-    resources={
-        r"/api/*": {
-            "origins": allowed_origin
-        }
-    },
+    resources={r"/api/*": {"origins": allowed_origins}},
     supports_credentials=True
 )
-
 # -----------------------------
 # Database
 # -----------------------------
