@@ -33,11 +33,8 @@ app.secret_key = SECRET_KEY
 # ==========================================
 app.config["SESSION_COOKIE_NAME"] = "mycraftopia_session"
 app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["SESSION_COOKIE_SECURE"] = (
-    os.getenv("FLASK_ENV", "").lower() == "production"
-)
-
+app.config["SESSION_COOKIE_SAMESITE"] = "None"
+app.config["SESSION_COOKIE_SECURE"] = True
 # ==========================================
 # FRONTEND URL
 # ==========================================
@@ -52,9 +49,16 @@ CORS(
     resources={r"/api/*": {"origins": allowed_origins}},
     supports_credentials=True
 )
+@app.route("/")
+def health_check():
+    return jsonify({
+        "message": "MyCraftopia backend is running",
+        "status": "success"
+})
 # -----------------------------
 # Database
 # -----------------------------
+
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 app.config["SQLALCHEMY_DATABASE_URI"] = (
@@ -174,6 +178,8 @@ class OrderItem(db.Model):
         db.Integer,
         nullable=False
     )
+with app.app_context():
+    db.create_all()
     
 
 def admin_required(f):
@@ -387,6 +393,7 @@ MyCraftopia Team
             "error": "Unable to place order."
         }), 500
     
+
 
 # =========================================================
 # GET PRODUCTS
