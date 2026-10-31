@@ -103,6 +103,8 @@ class Class(db.Model):
     image = db.Column(db.Text)
     desc = db.Column(db.Text)
 
+
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -1186,7 +1188,52 @@ def about():
 
     return render_template("about.html")
 
+# -----------------------------
+# TEMPORARY: Import products and classes to Render
+# -----------------------------
+@app.route("/api/admin/import-data", methods=["POST"])
+def import_data():
+    secret = os.getenv("IMPORT_SECRET")
 
+    if not secret or request.headers.get("X-Import-Secret") != secret:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json() or {}
+
+    try:
+        for item in data.get("products", []):
+            if not db.session.get(Product, item["id"]):
+                db.session.add(Product(
+                    id=item["id"],
+                    name=item["name"],
+                    price=item["price"],
+                    category=item["category"],
+                    image=item.get("image"),
+                    desc=item.get("desc")
+                ))
+
+        for item in data.get("classes", []):
+            if not db.session.get(Class, item["id"]):
+                db.session.add(Class(
+                    id=item["id"],
+                    name=item["name"],
+                    category=item["category"],
+                    level=item["level"],
+                    image=item.get("image"),
+                    desc=item.get("desc")
+                ))
+
+        db.session.commit()
+
+        return jsonify({
+            "message": "Import successful",
+            "products": Product.query.count(),
+            "classes": Class.query.count()
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 # -----------------------------
 # Run App
 # -----------------------------
