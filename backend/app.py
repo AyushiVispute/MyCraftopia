@@ -56,15 +56,17 @@ def health_check():
         "status": "success"
 })
 # -----------------------------
-# Database
+#DATABASE
 # -----------------------------
-
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    f"sqlite:///{os.path.join(BASE_DIR, 'instance', 'classes.db')}"
-)
+# Ensure the instance folder exists on Render
+INSTANCE_DIR = os.path.join(BASE_DIR, "instance")
+os.makedirs(INSTANCE_DIR, exist_ok=True)
 
+DATABASE_PATH = os.path.join(INSTANCE_DIR, "classes.db")
+
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATABASE_PATH}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
